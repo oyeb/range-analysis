@@ -1,0 +1,144 @@
+#+STARTUP: showall indent
+#+STARTUP: hidestars
+
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="/home/ananya/orgs/css/mowen.css" />
+#+TITLE: Range Analysis
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [a4paper,11pt]
+#+latex_header: \usepackage{natbib}
+#+LATEX_HEADER: \bibliographystyle{abbrvnat}
+
+
+* Overview
+Range Analysis is a forward DFA. The =range= of a variable $v$ at a program point $p$ is the range
+$[L, R]$ of numeric values that it can assume.
+** Scope                                                             :vague:
+We restrict ourselves to integers to avoid issues with the boundaries of ranges, specifically
+intervals with open end(s) and division. Integer division results are very well defined and are
+neither implementation nor hardware dependent.
+
+#+begin_quote
+/Am I handling integer overflow and wrap around?/
+#+end_quote
+
+** Properties
+- Inseparability ::
+  The data flow values of different variables are dependent on each other.
+
+* Data Flow Equations
+** Data Flow values
+
+$In_n$, $Out_n$ values are mappings $\mathbb{V}\text{ar} \to \hat{L}$. These data flow values are
+also called /context/, and denoted by $X$ in this document.
+
+\begin{align}
+    In_n &= \begin{cases}
+    \lbrace \langle\, y \mapsto \texttt{undef}\, \rangle\, |\: y \in \mathbb{V}\text{ar} \rbrace & \quad \text{if}\, n \,\text{is start} \\
+    \quad\bigsqcup\limits_{p \:\in Pred(n)} In_p   & \quad \text{otherwise}
+    \end{cases} \label{eq:in} \\
+Out_n &= f_n(In_n) \label{eq:out}
+\end{align}
+
+** Flow Function
+We define a Flow Function $f(X) : L \to L$ and a function $\text{eval}(e, X)$ that computes the =range= of
+expression $e$ in the context $X$.
+
+\begin{align}
+f_n(X) &= \begin{cases}
+       X \big[ u \mapsto (-\infty, \infty) \big] & \quad  u \in \mathbb{V}\text{ar}, u \;\text{is read from file} \\
+       X \big[ u \mapsto [k, k] \big] & \quad  u \in \mathbb{V}\text{ar}, u = k, k \text{is constant} \\
+       X \big[ u \mapsto X[v] \big] & \quad  u,v \in \mathbb{V}\text{ar}, u = v \\
+       X \big[ u \mapsto \text{eval}(e, X) \big] & \quad  u \in \mathbb{V}\text{ar}, u = e, e \;\text{is an expression}
+\end{cases} \label {eq:flow} \\
+\text{eval}(e, X) &= \begin{cases}
+                  X[a] \oplus X[b] & \quad a,b \in \text{Opd}(e) \cap \mathbb{V}\text{ar}, \text{Op} = + \\
+                  X[a] \ominus X[b] & \quad a,b \in \text{Opd}(e) \cap \mathbb{V}\text{ar}, \text{Op} = - \\
+                  X[a] \otimes X[b] & \quad a,b \in \text{Opd}(e) \cap \mathbb{V}\text{ar}, \text{Op} = \times \\
+                  X[a] \oslash X[b] & \quad a,b \in \text{Opd}(e) \cap \mathbb{V}\text{ar}, \text{Op} = \div \\
+\end{cases} \label{eq:eval}
+\end{align}
+
+** Interval Operations
+Interval arithmetic is surprisingly tricky, wrt. division and multiplication (9 cases!). citenum:popova98 discusses
+ways to implement a fast interval multiplier in modern pipelined superscalar FPUs. [[http://www.csgnetwork.com/directintervalcalc.html][Here]] is a handy
+web interval arithmetic calculator to verify (my) implementations.
+
+\begin{align}
+[a,b] \oplus [x,y] &= [a+x, b+y] \label{eq:oplus} \\
+[a,b] \ominus [x,y] &= [a-y, b-x] \label{eq:ominus} \\
+[a,b] \otimes [x,y] &= [\text{min}(ax, ay, bx, by), \text{max}(ax, ay, bx, by)] \label{eq:otimes} \\
+[a,b] \oslash [x,y] &= \begin{cases}
+                    [a, b] \otimes [1/y, 1/x] & \quad 0 \notin [x, y] \\
+                    [-\infty, \infty] & \quad 0 \in [a, b] \wedge 0 \in [x, y] \\
+                    [b/x, \infty] & \quad b < 0 \wedge y = 0 \\ 
+                    [-\infty, b/y] \cup [b/x, \infty] & \quad b < 0 \wedge x < 0 < y \\
+                    [-\infty, b/y] & \quad b < 0 \wedge x = 0 \\
+                    [-\infty, a/x] & \quad a > 0 \wedge y = 0 \\
+                    [-\infty, a/x] \cup [a/y, \infty] & \quad a > 0 \wedge x < 0 < y \\
+                    [a/y, \infty] & \quad a > 0 \wedge x = 0 \\
+                    \emptyset & \quad 0 \notin [a, b] \wedge c = d = 0
+\end{cases} \label{eq:oslash}
+\end{align}
+
+All interval arithmetic operations and algorithms are compiled in
+citeauthor:hickey_inter_arith_base. Additional operators can be defined such as exponentiation and
+logarithm.
+
+** Component Lattice                                                 :vague:
+
+- Range ::
+  Represented by a tuple $(l, r)$ where, $l \le r \ \wedge \ l,r \in \mathbb{Z}$. Hence, a range $(l, r)$
+  represents the set $\lbrace a\ |\ a \in \mathbb{Z},\ l \le a \le r \rbrace$.
+
+  The natural $\cap$ for sets is the only /closed/ operator, whereas the natural $\cup$ is /not
+  closed/! We define a new /closed/ $\cup^\star$ for our analysis:
+  \begin{equation}
+  a_1 \cup^\star a_2 = (l_1, r_1) \cup^\star (l_2, r_2) = \big( \text{min}(l_1, l_2),\; \text{max}(r_1, r_2) \big)
+  \label{eq:comp-lattice-union}
+  \end{equation}
+  This definition brings imprecision upon application of meet in ref:eq:in, but makes the result
+  computable. If we were to use the natural and /precise/ $\cup$ the result of ref:eq:in can become
+  arbitrarily large.
+
+  Some boolean operators are also defined,
+  \begin{align}
+  a_1 \subseteq a_2 &= (l_1 \ge l_2\ \wedge\ r_1 \le r_2) \label{eq:comp-lattice-subset}
+  \end{align}
+
+- Component Set ::
+  $\mathcal{A}$ is the set of all ranges in $\mathbb{Z}$, and includes the range $\emptyset$ which
+  acts like an =undef= in our analysis.
+- Component Lattice ::
+  \begin{equation} \hat{L} = (\mathcal{A}, \supseteq)  \label{eq:comp-lattice} \end{equation}
+  \begin{equation} \top = \emptyset \qquad \bot = (-\infty, \infty) \label{eq:comp-lattice-top-bot} \end{equation}
+- Meet Operator ::
+  \begin{equation} \hat{\sqcap}\ =\ \cup^\star \label{eq:comp-lattice-meet} \end{equation}
+
+#+begin_quote
+/I have to decide if I'm gonna stay in Z or move to R. This is especially important with my lattice
+definition, as $A$ may rather be the set of all ranges in =[-MAX_INT, +MAX_INT]= in  case of Z./
+#+end_quote
+
+* Soot
+The best resources to =soot= are packaged with it in the =/tutorial= directory. Run =make= in it and
+enjoy the material.
+
+** =FlowSet= implementation
+- =clone()=
+- =clear()=
+- =isEmpty()=
+- =copy (FlowSet dest)=
+- =union (FlowSet other, FlowSet dest)=
+- =intersection (FlowSet other, FlowSet dest)=
+- =difference (FlowSet other, FlowSet dest)=
+** =Range=
+We define a =Range= object. =undef=, $\cup$, 
+
+bibliography:/share/documents/bibliography/references.bib
+** Setting up IntelliJ IDEA                                       :noexport:
+   - Installed IDE, chose the JDK (1.7) and added a library (soot-soot-2.5.0). This gave me code
+     completion,.
+   - Compilation?
+** Troubles with soot                                             :noexport:
+Can't use it as a standalone thing on CLI. Some problem with classpaths.
+
