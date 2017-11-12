@@ -1,18 +1,34 @@
 package range;
 
-import soot.toolkits.graph.DirectedGraph;
+import soot.Local;
+import soot.toolkits.graph.UnitGraph;
+import soot.toolkits.scalar.ArraySparseSet;
 import soot.toolkits.scalar.BackwardFlowAnalysis;
+import soot.toolkits.scalar.FlowSet;
+import soot.util.Chain;
 
-public class RangeAnalysis extends BackwardFlowAnalysis{
 
-    public RangeAnalysis(DirectedGraph g){
+public class RangeAnalysis extends BackwardFlowAnalysis {
+
+    private FlowSet emptySet, initialSet;
+
+    public RangeAnalysis(UnitGraph g) {
         super(g);
+        initialSet = new ArraySparseSet();
+        emptySet = initialSet.clone();
+
+        // generate list of locals
+        Chain locals = g.getBody().getLocals();
+        for (Object local : locals) {
+            Local l = (Local) local;
+            initialSet.add(new Range(l));
+        }
         doAnalysis();
     }
 
     @Override
     protected Object newInitialFlow() {
-        return null;
+        return emptySet.clone();
     }
 
     @Override

@@ -6,8 +6,19 @@
 #+LATEX_CLASS: article
 #+LATEX_CLASS_OPTIONS: [a4paper,11pt]
 #+latex_header: \usepackage{natbib}
-#+LATEX_HEADER: \bibliographystyle{abbrvnat}
+#+latex_header: \usepackage{graphicx}
+#+latex_header: \bibliographystyle{abbrvnat}
 
+#+latex_header: \makeatletter
+#+latex_header: \providecommand{\bigsqcap}{%
+#+latex_header:   \mathop{%
+#+latex_header:     \mathpalette\@updown\bigsqcup
+#+latex_header:   }%
+#+latex_header: }
+#+latex_header: \newcommand*{\@updown}[2]{%
+#+latex_header:   \rotatebox[origin=c]{180}{$\m@th#1#2$}%
+#+latex_header: }
+#+latex_header: \makeatother
 
 * Overview
 Range Analysis is a forward DFA. The =range= of a variable $v$ at a program point $p$ is the range
@@ -33,10 +44,10 @@ also called /context/, and denoted by $X$ in this document.
 
 \begin{align}
     In_n &= \begin{cases}
-    \lbrace \langle\, y \mapsto \texttt{undef}\, \rangle\, |\: y \in \mathbb{V}\text{ar} \rbrace & \quad \text{if}\, n \,\text{is start} \\
-    \quad\bigsqcup\limits_{p \:\in Pred(n)} In_p   & \quad \text{otherwise}
-    \end{cases} \label{eq:in} \\
-Out_n &= f_n(In_n) \label{eq:out}
+         \lbrace \langle\, y \mapsto \texttt{undef}\, \rangle\, |\: y \in \mathbb{V}\text{ar} \rbrace & \quad \text{if}\, n \,\text{is start} \\[0.5em]
+         \displaystyle \bigsqcap_{p \:\in Pred(n)} In_p   & \quad \text{otherwise}
+         \end{cases} \label{eq:in} \\[1em]
+    Out_n &= f_n(In_n) \label{eq:out}
 \end{align}
 
 ** Flow Function
@@ -46,16 +57,16 @@ expression $e$ in the context $X$.
 \begin{align}
 f_n(X) &= \begin{cases}
        X \big[ u \mapsto (-\infty, \infty) \big] & \quad  u \in \mathbb{V}\text{ar}, u \;\text{is read from file} \\
-       X \big[ u \mapsto [k, k] \big] & \quad  u \in \mathbb{V}\text{ar}, u = k, k \text{is constant} \\
+       X \big[ u \mapsto [k, k] \big] & \quad  u \in \mathbb{V}\text{ar}, u = k, k\ \text{is constant} \\
        X \big[ u \mapsto X[v] \big] & \quad  u,v \in \mathbb{V}\text{ar}, u = v \\
        X \big[ u \mapsto \text{eval}(e, X) \big] & \quad  u \in \mathbb{V}\text{ar}, u = e, e \;\text{is an expression}
-\end{cases} \label {eq:flow} \\
+       \end{cases} \label{eq:flow}\\
 \text{eval}(e, X) &= \begin{cases}
                   X[a] \oplus X[b] & \quad a,b \in \text{Opd}(e) \cap \mathbb{V}\text{ar}, \text{Op} = + \\
                   X[a] \ominus X[b] & \quad a,b \in \text{Opd}(e) \cap \mathbb{V}\text{ar}, \text{Op} = - \\
                   X[a] \otimes X[b] & \quad a,b \in \text{Opd}(e) \cap \mathbb{V}\text{ar}, \text{Op} = \times \\
                   X[a] \oslash X[b] & \quad a,b \in \text{Opd}(e) \cap \mathbb{V}\text{ar}, \text{Op} = \div \\
-\end{cases} \label{eq:eval}
+                  \end{cases} \label{eq:eval}
 \end{align}
 
 ** Interval Operations
@@ -66,7 +77,7 @@ web interval arithmetic calculator to verify (my) implementations.
 \begin{align}
 [a,b] \oplus [x,y] &= [a+x, b+y] \label{eq:oplus} \\
 [a,b] \ominus [x,y] &= [a-y, b-x] \label{eq:ominus} \\
-[a,b] \otimes [x,y] &= [\text{min}(ax, ay, bx, by), \text{max}(ax, ay, bx, by)] \label{eq:otimes} \\
+[a,b] \otimes [x,y] &= [\text{min}(ax, ay, bx, by),\ \text{max}(ax, ay, bx, by)] \label{eq:otimes} \\
 [a,b] \oslash [x,y] &= \begin{cases}
                     [a, b] \otimes [1/y, 1/x] & \quad 0 \notin [x, y] \\
                     [-\infty, \infty] & \quad 0 \in [a, b] \wedge 0 \in [x, y] \\
@@ -86,33 +97,48 @@ logarithm.
 
 ** Component Lattice                                                 :vague:
 
-- Range ::
-  Represented by a tuple $(l, r)$ where, $l \le r \ \wedge \ l,r \in \mathbb{Z}$. Hence, a range $(l, r)$
-  represents the set $\lbrace a\ |\ a \in \mathbb{Z},\ l \le a \le r \rbrace$.
+*** Range ($\mathcal{R}$)
 
-  The natural $\cap$ for sets is the only /closed/ operator, whereas the natural $\cup$ is /not
-  closed/! We define a new /closed/ $\cup^\star$ for our analysis:
-  \begin{equation}
-  a_1 \cup^\star a_2 = (l_1, r_1) \cup^\star (l_2, r_2) = \big( \text{min}(l_1, l_2),\; \text{max}(r_1, r_2) \big)
-  \label{eq:comp-lattice-union}
-  \end{equation}
-  This definition brings imprecision upon application of meet in ref:eq:in, but makes the result
-  computable. If we were to use the natural and /precise/ $\cup$ the result of ref:eq:in can become
-  arbitrarily large.
+A range is a tuple, $$(l, r) \equiv \lbrace a\ |\ a \in \mathbb{Z},\ l \le a \le r \rbrace, \quad l \le r\ \wedge\ l,r \in \mathbb{Z}$$
 
-  Some boolean operators are also defined,
-  \begin{align}
-  a_1 \subseteq a_2 &= (l_1 \ge l_2\ \wedge\ r_1 \le r_2) \label{eq:comp-lattice-subset}
-  \end{align}
+We will be /merging/ ranges in ref:eq:in, so we need to define a new /closed/ $\hat{\cup}$
+operator for our analysis:
+\begin{equation} \label{eq:comp-lattice-union}
+\begin{split}
+a_1\  \hat{\cup}\ a_2 &= (l_1, r_1)\ \hat{\cup}\ (l_2, r_2)\\
+                      &= \big( \text{min}(l_1, l_2),\; \text{max}(r_1, r_2) \big)
+\end{split}
+\end{equation}
 
-- Component Set ::
-  $\mathcal{A}$ is the set of all ranges in $\mathbb{Z}$, and includes the range $\emptyset$ which
-  acts like an =undef= in our analysis.
-- Component Lattice ::
-  \begin{equation} \hat{L} = (\mathcal{A}, \supseteq)  \label{eq:comp-lattice} \end{equation}
-  \begin{equation} \top = \emptyset \qquad \bot = (-\infty, \infty) \label{eq:comp-lattice-top-bot} \end{equation}
-- Meet Operator ::
-  \begin{equation} \hat{\sqcap}\ =\ \cup^\star \label{eq:comp-lattice-meet} \end{equation}
+#+begin_quote
+This definition results in imprecision upon application of $\sqcap$ in ref:eq:in, but
+makes the result computable. If we were to use the natural and /precise/ $\cup$
+(which gives a union of disjoint sets), the result of ref:eq:in can become
+arbitrarily large.
+#+end_quote
+
+Some boolean operators are also defined,
+\begin{equation}
+a_1 \subseteq a_2 = (l_1 \ge l_2\ \wedge\ r_1 \le r_2), \quad a_1,a_2 \in \mathcal{R}
+\label{eq:comp-lattice-subset}
+\end{equation}
+
+*** Component Set
+$\mathcal{A}$ is the set of all ranges in $\mathbb{Z}$, *including* the range $\emptyset$ which
+acts like an =undef= in our analysis.
+
+*** The Lattice
+\begin{equation} \hat{L} = (\mathcal{A}, \supseteq)  \label{eq:comp-lattice} \end{equation}
+Thus, $\top$ is $\emptyset$ and $\bot$ is $(-\infty, \infty)$.
+
+*** Meet Operator
+\begin{equation}
+a\ \hat{\sqcap}\ b = \begin{cases}
+                  \hat{\cup} & \quad a,b \ne \emptyset \\
+                  \emptyset & \quad a = \emptyset \vee b = \emptyset
+\end{cases}
+\label{eq:comp-lattice-meet} \end{equation}
+
 
 #+begin_quote
 /I have to decide if I'm gonna stay in Z or move to R. This is especially important with my lattice
@@ -124,6 +150,15 @@ The best resources to =soot= are packaged with it in the =/tutorial= directory. 
 enjoy the material.
 
 ** =FlowSet= implementation
+Most (simple) analyses compute 1 =bit= information about some code entity (variable or expression,
+etc). Constant Propagation computes $n$ =bit= information per variable and also has an unbounded
+flow function like Range Analysis.
+
+For such analyses, a =HashMap= implementation suits best to represent =FlowSets= because we
+frequently lookup the computed information of other entities -- mere =use= or =def= doesn't serve us
+much. Since Java is weakly typed, I found it hard to implement a generic =HashMapFlowSet= and just
+went ahead with a much simpler =RangeFlowSet=.
+
 - =clone()=
 - =clear()=
 - =isEmpty()=
@@ -131,8 +166,12 @@ enjoy the material.
 - =union (FlowSet other, FlowSet dest)=
 - =intersection (FlowSet other, FlowSet dest)=
 - =difference (FlowSet other, FlowSet dest)=
+
 ** =Range=
-We define a =Range= object. =undef=, $\cup$, 
+We define a =Range= object. An instance is created at the following locations in code, as defined in
+ref:eq:flow:
+- Assignments (constant, expression, other local)
+- Read from =stdin=
 
 bibliography:/share/documents/bibliography/references.bib
 ** Setting up IntelliJ IDEA                                       :noexport:
