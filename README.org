@@ -1,5 +1,6 @@
 #+STARTUP: showall indent
 #+STARTUP: hidestars
+#+OPTIONS: tags:nil
 
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="/home/ananya/orgs/css/mowen.css" />
 #+TITLE: Range Analysis
@@ -133,7 +134,7 @@ Thus, $\top$ is $\emptyset$ and $\bot$ is $(-\infty, \infty)$.
 
 *** Meet Operator
 \begin{equation}
-a\ \hat{\sqcap}\ b = \hat{\cup} & \quad a,b \in \mathcal{R} \\
+a\ \hat{\sqcap}\ b = \hat{\cup} \quad a,b \in \mathcal{R}
 \label{eq:comp-lattice-meet} \end{equation}
 
 
