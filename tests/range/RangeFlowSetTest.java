@@ -44,4 +44,21 @@ public class RangeFlowSetTest {
         Range r = s12.get(bar);
         assertTrue(bar1.equals(r));
     }
+
+    @Test
+    public void copy_constructor() throws Exception {
+        RangeFlowSet mirror = new RangeFlowSet(s1);
+        assertTrue(mirror.equals(s1));
+        assertFalse(mirror.getElementsMap() == s1.getElementsMap());
+        assertFalse(mirror.get(foo) == s1.get(foo));
+    }
+
+    @Test
+    public void copy() throws Exception {
+        RangeFlowSet mirror = new RangeFlowSet();
+        s1.copy(mirror);
+        assertTrue(mirror.equals(s1));
+        assertFalse(mirror.getElementsMap() == s1.getElementsMap());
+        assertFalse(mirror.get(foo) == s1.get(foo));
+    }
 }

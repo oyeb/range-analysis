@@ -10,19 +10,11 @@ import soot.util.Chain;
 
 public class RangeAnalysis extends BackwardFlowAnalysis {
 
-    private FlowSet emptySet, initialSet;
+    private FlowSet emptySet;
 
     public RangeAnalysis(UnitGraph g) {
         super(g);
-        initialSet = new ArraySparseSet();
-        emptySet = initialSet.clone();
-
-        // generate list of locals
-        Chain locals = g.getBody().getLocals();
-        for (Object local : locals) {
-            Local l = (Local) local;
-            initialSet.add(new Range(l));
-        }
+        emptySet = new RangeFlowSet();
         doAnalysis();
     }
 
@@ -33,21 +25,26 @@ public class RangeAnalysis extends BackwardFlowAnalysis {
 
     @Override
     protected Object entryInitialFlow() {
-        return null;
+        return emptySet.clone();
     }
 
     @Override
-    protected void merge(Object o, Object a1, Object a2) {
-
+    protected void merge(Object in1, Object in2, Object out) {
+        FlowSet inSet1 = (FlowSet) in1,
+                inSet2 = (FlowSet) in2,
+                outSet = (FlowSet) out;
+        inSet1.union(inSet2, outSet);
     }
 
     @Override
-    protected void copy(Object o, Object a1) {
-
+    protected void copy(Object src, Object dest) {
+        FlowSet destSet = (FlowSet) dest,
+                srcSet = (FlowSet) src;
+        srcSet.copy(destSet);
     }
 
     @Override
-    protected void flowThrough(Object o, Object o2, Object a1) {
+    protected void flowThrough(Object in, Object node, Object out) {
 
     }
 

@@ -2,6 +2,7 @@ package range;
 
 import soot.Local;
 import soot.toolkits.scalar.AbstractFlowSet;
+import soot.toolkits.scalar.FlowSet;
 
 import java.util.*;
 
@@ -12,8 +13,9 @@ public class RangeFlowSet extends AbstractFlowSet{
         elements = new HashMap<>();
     }
     public RangeFlowSet(RangeFlowSet other){
+        elements = new HashMap<>();
         for (Map.Entry<Local, Range> entry : other.elements.entrySet()){
-            elements.put(entry.getKey(), entry.getValue());
+            elements.put(entry.getKey(), entry.getValue().clone());
         }
     }
 
@@ -24,6 +26,39 @@ public class RangeFlowSet extends AbstractFlowSet{
     @Override
     public AbstractFlowSet clone() {
         return new RangeFlowSet(this);
+    }
+
+    @Override
+    public void copy(FlowSet dest) {
+        RangeFlowSet other = (RangeFlowSet) dest;
+        if (other.elements.size() > 4 * elements.size())
+            other.elements = new HashMap<>();
+        else
+            other.elements.clear();
+        for (Map.Entry<Local, Range> entry : elements.entrySet()){
+            other.elements.put(entry.getKey(), entry.getValue().clone());
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof RangeFlowSet){
+            RangeFlowSet other = (RangeFlowSet) o;
+            if (elements.size() != other.elements.size()){
+                //System.out.println("size mismatch");
+                return false;
+            }
+            for (Map.Entry<Local, Range> entry : other.elements.entrySet()){
+                Local l = entry.getKey();
+                Range r = entry.getValue();
+                if (! r.equals(get(l))) {
+                    //System.out.println("key/val mismatch");
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     @Override

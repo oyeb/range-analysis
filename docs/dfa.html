@@ -1,0 +1,552 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2017-11-16 Thu 01:28 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Range Analysis</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="Ananya Bahadur" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="/home/ananya/orgs/css/mowen.css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Range Analysis</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org7eac2af">1. Overview</a>
+<ul>
+<li><a href="#org8cc1fe1">1.1. Scope</a></li>
+<li><a href="#org7655219">1.2. Properties</a></li>
+</ul>
+</li>
+<li><a href="#org0b024d8">2. Data Flow Equations</a>
+<ul>
+<li><a href="#org09e44c7">2.1. Data Flow values</a></li>
+<li><a href="#org7bbc539">2.2. Flow Function</a></li>
+<li><a href="#org96f06a2">2.3. Interval Operations</a></li>
+<li><a href="#org493988a">2.4. Component Lattice</a>
+<ul>
+<li><a href="#org62d778a">2.4.1. Range (\(\mathcal{R}\))</a></li>
+<li><a href="#org56c0c59">2.4.2. Component Set</a></li>
+<li><a href="#org404d8fe">2.4.3. The Lattice</a></li>
+<li><a href="#org39b69a1">2.4.4. Meet Operator</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#orgb6dc5ae">3. Soot</a>
+<ul>
+<li><a href="#org8db078b">3.1. <code>FlowSet</code> implementation</a></li>
+<li><a href="#org39c8119">3.2. <code>Range</code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org7eac2af" class="outline-2">
+<h2 id="org7eac2af"><span class="section-number-2">1</span> Overview</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Range Analysis is a forward DFA. The <code>range</code> of a variable \(v\) at a program point \(p\) is the range
+\([L, R]\) of numeric values that it can assume.
+</p>
+</div>
+<div id="outline-container-org8cc1fe1" class="outline-3">
+<h3 id="org8cc1fe1"><span class="section-number-3">1.1</span> Scope</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+We restrict ourselves to integers to avoid issues with the boundaries of ranges, specifically
+intervals with open end(s) and division. Integer division results are very well defined and are
+neither implementation nor hardware dependent.
+</p>
+
+<blockquote>
+<p>
+<i>Am I handling integer overflow and wrap around?</i>
+</p>
+</blockquote>
+</div>
+</div>
+
+<div id="outline-container-org7655219" class="outline-3">
+<h3 id="org7655219"><span class="section-number-3">1.2</span> Properties</h3>
+<div class="outline-text-3" id="text-1-2">
+<dl class="org-dl">
+<dt>Inseparability</dt><dd>The data flow values of different variables are dependent on each other.</dd>
+</dl>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org0b024d8" class="outline-2">
+<h2 id="org0b024d8"><span class="section-number-2">2</span> Data Flow Equations</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+<div id="outline-container-org09e44c7" class="outline-3">
+<h3 id="org09e44c7"><span class="section-number-3">2.1</span> Data Flow values</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+\(In_n\), \(Out_n\) values are mappings \(\mathbb{V}\text{ar} \to \hat{L}\). These data flow values are
+also called <i>context</i>, and denoted by \(X\) in this document.
+</p>
+
+\begin{align}
+    In_n &= \begin{cases}
+         \lbrace \langle\, y \mapsto \texttt{undef}\, \rangle\, |\: y \in \mathbb{V}\text{ar} \rbrace & \quad \text{if}\, n \,\text{is start} \\[0.5em]
+         \displaystyle \bigsqcap_{p \:\in Pred(n)} In_p   & \quad \text{otherwise}
+         \end{cases} \label{eq:in} \\[1em]
+    Out_n &= f_n(In_n) \label{eq:out}
+\end{align}
+</div>
+</div>
+
+<div id="outline-container-org7bbc539" class="outline-3">
+<h3 id="org7bbc539"><span class="section-number-3">2.2</span> Flow Function</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+We define a Flow Function \(f(X) : L \to L\) and a function \(\text{eval}(e, X)\) that computes the <code>range</code> of
+expression \(e\) in the context \(X\).
+</p>
+
+\begin{align}
+f_n(X) &= \begin{cases}
+       X \big[ u \mapsto (-\infty, \infty) \big] & \quad  u \in \mathbb{V}\text{ar}, u \;\text{is read from file} \\
+       X \big[ u \mapsto [k, k] \big] & \quad  u \in \mathbb{V}\text{ar}, u = k, k\ \text{is constant} \\
+       X \big[ u \mapsto X[v] \big] & \quad  u,v \in \mathbb{V}\text{ar}, u = v \\
+       X \big[ u \mapsto \text{eval}(e, X) \big] & \quad  u \in \mathbb{V}\text{ar}, u = e, e \;\text{is an expression}
+       \end{cases} \label{eq:flow}\\
+\text{eval}(e, X) &= \begin{cases}
+                  X[a] \oplus X[b] & \quad a,b \in \text{Opd}(e) \cap \mathbb{V}\text{ar}, \text{Op} = + \\
+                  X[a] \ominus X[b] & \quad a,b \in \text{Opd}(e) \cap \mathbb{V}\text{ar}, \text{Op} = - \\
+                  X[a] \otimes X[b] & \quad a,b \in \text{Opd}(e) \cap \mathbb{V}\text{ar}, \text{Op} = \times \\
+                  X[a] \oslash X[b] & \quad a,b \in \text{Opd}(e) \cap \mathbb{V}\text{ar}, \text{Op} = \div \\
+                  \end{cases} \label{eq:eval}
+\end{align}
+</div>
+</div>
+
+<div id="outline-container-org96f06a2" class="outline-3">
+<h3 id="org96f06a2"><span class="section-number-3">2.3</span> Interval Operations</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+Interval arithmetic is surprisingly tricky, wrt. division and multiplication (9 cases!). <a class='org-ref-reference' href="#popova98">popova98</a> discusses
+ways to implement a fast interval multiplier in modern pipelined superscalar FPUs. <a href="http://www.csgnetwork.com/directintervalcalc.html">Here</a> is a handy
+web interval arithmetic calculator to verify (my) implementations.
+</p>
+
+\begin{align}
+[a,b] \oplus [x,y] &= [a+x, b+y] \label{eq:oplus} \\
+[a,b] \ominus [x,y] &= [a-y, b-x] \label{eq:ominus} \\
+[a,b] \otimes [x,y] &= [\text{min}(ax, ay, bx, by),\ \text{max}(ax, ay, bx, by)] \label{eq:otimes} \\
+[a,b] \oslash [x,y] &= \begin{cases}
+                    [a, b] \otimes [1/y, 1/x] & \quad 0 \notin [x, y] \\
+                    [-\infty, \infty] & \quad 0 \in [a, b] \wedge 0 \in [x, y] \\
+                    [b/x, \infty] & \quad b < 0 \wedge y = 0 \\ 
+                    [-\infty, b/y] \cup [b/x, \infty] & \quad b < 0 \wedge x < 0 < y \\
+                    [-\infty, b/y] & \quad b < 0 \wedge x = 0 \\
+                    [-\infty, a/x] & \quad a > 0 \wedge y = 0 \\
+                    [-\infty, a/x] \cup [a/y, \infty] & \quad a > 0 \wedge x < 0 < y \\
+                    [a/y, \infty] & \quad a > 0 \wedge x = 0 \\
+                    \emptyset & \quad 0 \notin [a, b] \wedge c = d = 0
+\end{cases} \label{eq:oslash}
+\end{align}
+
+<p>
+All interval arithmetic operations and algorithms are compiled in
+<a class='org-ref-reference' href="#hickey_inter_arith_base">hickey_inter_arith_base</a>. Additional operators can be defined such as exponentiation and
+logarithm.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org493988a" class="outline-3">
+<h3 id="org493988a"><span class="section-number-3">2.4</span> Component Lattice</h3>
+<div class="outline-text-3" id="text-2-4">
+</div>
+<div id="outline-container-org62d778a" class="outline-4">
+<h4 id="org62d778a"><span class="section-number-4">2.4.1</span> Range (\(\mathcal{R}\))</h4>
+<div class="outline-text-4" id="text-2-4-1">
+<p>
+A range is a tuple, \[(l, r) \equiv \lbrace a\ |\ a \in \mathbb{Z},\ l \le a \le r \rbrace, \quad l \le r\ \wedge\ l,r \in \mathbb{Z}\]
+</p>
+
+<p>
+We will be <i>merging</i> ranges in <a href="#eq:in">eq:in</a>, so we need to define a new <i>closed</i> \(\hat{\cup}\)
+operator for our analysis:
+</p>
+\begin{equation} \label{eq:comp-lattice-union}
+\begin{split}
+a_1\  \hat{\cup}\ a_2 &= (l_1, r_1)\ \hat{\cup}\ (l_2, r_2)\\
+                      &= \big( \text{min}(l_1, l_2),\; \text{max}(r_1, r_2) \big)
+\end{split}
+\end{equation}
+
+<blockquote>
+<p>
+This definition results in imprecision upon application of \(\sqcap\) in <a href="#eq:in">eq:in</a>, but
+makes the result computable. If we were to use the natural and <i>precise</i> \(\cup\)
+(which gives a union of disjoint sets), the result of <a href="#eq:in">eq:in</a> can become
+arbitrarily large.
+</p>
+</blockquote>
+
+<p>
+Some boolean operators are also defined,
+</p>
+\begin{equation}
+a_1 \subseteq a_2 = (l_1 \ge l_2\ \wedge\ r_1 \le r_2), \quad a_1,a_2 \in \mathcal{R}
+\label{eq:comp-lattice-subset}
+\end{equation}
+</div>
+</div>
+
+<div id="outline-container-org56c0c59" class="outline-4">
+<h4 id="org56c0c59"><span class="section-number-4">2.4.2</span> Component Set</h4>
+<div class="outline-text-4" id="text-2-4-2">
+<p>
+\(\mathcal{A}\) is the set of all ranges in \(\mathbb{Z}\), <b>including</b> the range \(\emptyset\) which
+acts like an <code>undef</code> in our analysis.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org404d8fe" class="outline-4">
+<h4 id="org404d8fe"><span class="section-number-4">2.4.3</span> The Lattice</h4>
+<div class="outline-text-4" id="text-2-4-3">
+\begin{equation} \hat{L} = (\mathcal{A}, \supseteq)  \label{eq:comp-lattice} \end{equation}
+<p>
+Thus, \(\top\) is \(\emptyset\) and \(\bot\) is \((-\infty, \infty)\).
+</p>
+</div>
+</div>
+
+<div id="outline-container-org39b69a1" class="outline-4">
+<h4 id="org39b69a1"><span class="section-number-4">2.4.4</span> Meet Operator</h4>
+<div class="outline-text-4" id="text-2-4-4">
+\begin{equation}
+a\ \hat{\sqcap}\ b = \hat{\cup} \quad a,b \in \mathcal{R}
+\label{eq:comp-lattice-meet} \end{equation}
+
+
+<blockquote>
+<p>
+<i>I have to decide if I'm gonna stay in Z or move to R. This is especially important with my lattice
+definition, as \(A\) may rather be the set of all ranges in <code>[-MAX_INT, +MAX_INT]</code> in  case of Z.</i>
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb6dc5ae" class="outline-2">
+<h2 id="orgb6dc5ae"><span class="section-number-2">3</span> Soot</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+The best resources to <code>soot</code> are packaged with it in the <code>/tutorial</code> directory. Run <code>make</code> in it and
+enjoy the material.
+</p>
+</div>
+
+<div id="outline-container-org8db078b" class="outline-3">
+<h3 id="org8db078b"><span class="section-number-3">3.1</span> <code>FlowSet</code> implementation</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+Most (simple) analyses compute 1 <code>bit</code> information about some code entity (variable or expression,
+etc). Constant Propagation computes \(n\) <code>bit</code> information per variable and also has an unbounded
+flow function like Range Analysis.
+</p>
+
+<p>
+For such analyses, a <code>HashMap</code> implementation suits best to represent <code>FlowSets</code> because we
+frequently lookup the computed information of other entities &#x2013; mere <code>use</code> or <code>def</code> doesn't serve us
+much. Since Java is weakly typed, I found it hard to implement a generic <code>HashMapFlowSet</code> and just
+went ahead with a much simpler <code>RangeFlowSet</code>.
+</p>
+
+<ul class="org-ul">
+<li><code>clone()</code></li>
+<li><code>clear()</code></li>
+<li><code>isEmpty()</code></li>
+<li><code>copy (FlowSet dest)</code></li>
+<li><code>union (FlowSet other, FlowSet dest)</code></li>
+<li><code>intersection (FlowSet other, FlowSet dest)</code></li>
+<li><code>difference (FlowSet other, FlowSet dest)</code></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org39c8119" class="outline-3">
+<h3 id="org39c8119"><span class="section-number-3">3.2</span> <code>Range</code></h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+We define a <code>Range</code> object. An instance is created at the following locations in code, as defined in
+<a href="#eq:flow">eq:flow</a>:
+</p>
+<ul class="org-ul">
+<li>Assignments (constant, expression, other local)</li>
+<li>Read from <code>stdin</code></li>
+</ul>
+
+<p>
+<h1 class='org-ref-bib-h1'>Bibliography</h1>
+<ul class='org-ref-bib'><li><a id="popova98">[popova98] Popova, On the efficiency of interval multiplication algorithms, 117-132, in in: 3rd International Conference 'Real Numbers and Computers', edited by (1998)</a></li>
+<li><a id="hickey_inter_arith_base">[hickey_inter_arith_base] Hickey, Ju & Van Emden, Interval Arithmetic: From Principles To Implementation, <i>J. ACM</i>, <b>48(5)</b>, 1038-1068 (2001). <a href="http://fab.cba.mit.edu/classes/S62.12/docs/Hickey_interval.pdf">link</a>. <a href="http://dx.doi.org/10.1145/502102.502106">doi</a>.</a></li>
+</ul>
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Ananya Bahadur</p>
+<p class="date">Created: 2017-11-16 Thu 01:28</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

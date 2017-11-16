@@ -6,4 +6,5 @@
 *.pdf
 *.iml
 *#*
-*wiki/*
+range-analysis.wiki/*
+!/docs/*
